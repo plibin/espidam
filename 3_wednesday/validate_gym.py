@@ -1,8 +1,9 @@
 import random
-from sir import run_sir_model, initialise_modelstate
+from sir import run_sir_model
 import sir
 import matplotlib.pyplot as plt
 import gymnasium as gym
+from sir import initialise_modelstate
 
 
 
@@ -35,27 +36,32 @@ def make_sir_env(budget, seeds, N_c, N_a, gamma, beta):
     return env
 
 # Function to validate the gym environment
-def validate_gym(env, seeds, N_c, N_a, params):
+def validate_gym(env, seeds, N_c, N_a, params, budget=1000):
     env.reset()
 
-    # Randomly sample actions
     actions = [random.choice([True, False]) for _ in range(50)]
 
     initial_modelstate = initialise_modelstate(seeds, N_c, N_a)
 
     env_states = [(initial_modelstate[1], initial_modelstate[4])]
+
     ode_states = [(initial_modelstate[1], initial_modelstate[4])]
     ode_current_state = initial_modelstate.copy()
 
     timesteps = [0]
 
     done = False
-    step = 0   
-
-    # Iterate over the actions and execute them in the env and in the ODE model
+    step = 0  
+    used_budget = 0
     while not done:
         action = actions[step]
-        params["schools_closed"] = (action == 1)
+        close_schools = (action == 1)
+        if used_budget >= budget:
+            close_schools = False
+
+        if close_schools:
+            used_budget += 1
+        params["schools_closed"] = close_schools
         observation, _, terminated, _, _ = env.step(action)
         ode_current_state = run_sir_model(ode_current_state, (step + 1) * 7, params, [N_c, N_a])
         env_states.append((observation[1], observation[4]))
@@ -64,8 +70,6 @@ def validate_gym(env, seeds, N_c, N_a, params):
         step += 1
         timesteps.append(step*7)
 
-
-    # Plot the results
     plt.figure(figsize=(15, 10))
 
     c_env_data = [state[0] for state in env_states]
@@ -92,6 +96,7 @@ def validate_gym(env, seeds, N_c, N_a, params):
 
 # Run the validation
 if __name__ == "__main__":
-    env = make_sir_env(1000, sir.seeds, sir.N_c, sir.N_a, sir.disease_params["gamma"], sir.disease_params["beta"])
-    validate_gym(env, sir.seeds, sir.N_c, sir.N_a, sir.disease_params)
+    budget = 2
+    env = make_sir_env(budget, sir.seeds, sir.N_c, sir.N_a, sir.disease_params["gamma"], sir.disease_params["beta"])
+    validate_gym(env, sir.seeds, sir.N_c, sir.N_a, sir.disease_params, budget)
     env.close()
