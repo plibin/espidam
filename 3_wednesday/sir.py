@@ -1,6 +1,13 @@
 import numpy as np
 from scipy.integrate import odeint
 
+# Disease parameters
+disease_params = {
+    "beta": 0.02,
+    "gamma": 1/7,
+    "schools_closed": False
+}
+
 
 # Contact Matrix
 contact_matrix = [[18, 9], [3, 12]]
