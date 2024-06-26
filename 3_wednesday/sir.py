@@ -7,6 +7,9 @@ disease_params = {
     "gamma": 1/7,
     "schools_closed": False
 }
+seeds=1
+N_c=3666
+N_a=7334
 
 
 # Contact Matrix
