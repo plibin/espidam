@@ -38,12 +38,12 @@ def make_sir_env(budget, seeds, N_c, N_a, gamma, beta):
 def validate_gym(env, seeds, N_c, N_a, params):
     env.reset()
 
+    # Randomly sample actions
     actions = [random.choice([True, False]) for _ in range(50)]
 
     initial_modelstate = initialise_modelstate(seeds, N_c, N_a)
 
     env_states = [(initial_modelstate[1], initial_modelstate[4])]
-
     ode_states = [(initial_modelstate[1], initial_modelstate[4])]
     ode_current_state = initial_modelstate.copy()
 
@@ -51,6 +51,8 @@ def validate_gym(env, seeds, N_c, N_a, params):
 
     done = False
     step = 0   
+
+    # Iterate over the actions and execute them in the env and in the ODE model
     while not done:
         action = actions[step]
         params["schools_closed"] = (action == 1)
@@ -62,6 +64,8 @@ def validate_gym(env, seeds, N_c, N_a, params):
         step += 1
         timesteps.append(step*7)
 
+
+    # Plot the results
     plt.figure(figsize=(15, 10))
 
     c_env_data = [state[0] for state in env_states]
