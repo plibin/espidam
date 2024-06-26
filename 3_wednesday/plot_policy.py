@@ -2,17 +2,24 @@ import gymnasium as gym
 from stable_baselines3 import PPO
 import matplotlib.pyplot as plt
 
-# A function to print the action sequence of the policy
+
 def print_sequence(env: gym.Env, 
-                              model: PPO, ):
+                              model: PPO, budget):
     action_sequence = []
     observation, _ = env.reset()
     
     step = 0
     done = False
+    used_budget = 0
     while not done:
         action, _ = model.predict(observation, deterministic=True)
-        action_sequence.append(action if action == 1 and env.used_budget < env.budget else 0)
+        close_schools = (action == 1)
+        if used_budget >= budget:
+            close_schools = False
+
+        if close_schools:
+            used_budget += 1
+        action_sequence.append(close_schools)
         observation, _, terminated, _, _ = env.step(action)
         done = terminated
         step += 1
@@ -20,8 +27,6 @@ def print_sequence(env: gym.Env,
     print("Action sequence: ", action_sequence)
     return action_sequence
 
-
-# A function to plot the policy with the infection trajectories
 def plot_policy_with_trajectories(env, model, budget, ppo_seed):
     observation, _ = env.reset()
     actions = []
@@ -30,9 +35,17 @@ def plot_policy_with_trajectories(env, model, budget, ppo_seed):
 
     done = False
     step = 0
+    used_budget = 0
+
     while not done:
         action, _ = model.predict(observation, deterministic=True)
-        actions.append(action if action == 1 and env.used_budget < env.budget else 0)
+        close_schools = (action == 1)
+        if used_budget >= budget:
+            close_schools = False
+
+        if close_schools:
+            used_budget += 1
+        actions.append(close_schools)
         states.append((env.model_state[1], env.model_state[4]))
         timesteps.append(step*7)
         observation, _, terminated, _, _ = env.step(action)
@@ -54,8 +67,3 @@ def plot_policy_with_trajectories(env, model, budget, ppo_seed):
     plt.legend()
 
     plt.savefig("ppo_results_budget_{}_seed_{}.png".format(budget, ppo_seed), dpi=300)
-
-
-
-
-
